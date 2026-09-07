@@ -32,12 +32,62 @@ const schema = defineSchema(
       role: v.optional(roleValidator), // role of the user. do not remove
     }).index("email", ["email"]), // index for the email. do not remove or modify
 
-    // add other tables here
+    // Workspace of each professional (one per authenticated user).
+    professionals: defineTable({
+      userId: v.id("users"),
+      businessName: v.string(),
+      professionalName: v.string(),
+      city: v.optional(v.string()),
+      phone: v.optional(v.string()),
+      onboarded: v.boolean(),
+    }).index("by_user", ["userId"]),
 
-    // tableName: defineTable({
-    //   ...
-    //   // table fields
-    // }).index("by_field", ["field"])
+    // Service catalog offered by the professional.
+    services: defineTable({
+      professionalId: v.id("professionals"),
+      name: v.string(),
+      description: v.optional(v.string()),
+      durationMin: v.optional(v.number()),
+      price: v.optional(v.number()),
+      active: v.boolean(),
+    }).index("by_professional", ["professionalId"]),
+
+    // Clients of the professional.
+    clients: defineTable({
+      professionalId: v.id("professionals"),
+      name: v.string(),
+      phone: v.optional(v.string()),
+      email: v.optional(v.string()),
+      notes: v.optional(v.string()),
+      createdAt: v.number(),
+    }).index("by_professional", ["professionalId"]),
+
+    // Sessions: scheduled (agendada) or completed (realizada) appointments.
+    sessions: defineTable({
+      professionalId: v.id("professionals"),
+      clientId: v.id("clients"),
+      serviceId: v.optional(v.id("services")),
+      serviceName: v.optional(v.string()),
+      date: v.number(), // session date/time (ms)
+      status: v.union(
+        v.literal("agendada"),
+        v.literal("realizada"),
+        v.literal("cancelada"),
+      ),
+      price: v.optional(v.number()),
+      paid: v.optional(v.boolean()),
+      notes: v.optional(v.string()),
+    })
+      .index("by_professional", ["professionalId"])
+      .index("by_client", ["clientId"]),
+
+    // Free-form notes / contact comments about a client.
+    clientNotes: defineTable({
+      professionalId: v.id("professionals"),
+      clientId: v.id("clients"),
+      text: v.string(),
+      createdAt: v.number(),
+    }).index("by_client", ["clientId"]),
   },
   {
     schemaValidation: false,

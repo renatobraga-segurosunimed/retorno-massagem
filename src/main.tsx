@@ -13,13 +13,19 @@ import "./index.css";
 const Landing = lazy(() => import("./pages/Landing.tsx"));
 const AuthPage = lazy(() => import("./pages/Auth.tsx"));
 const Dashboard = lazy(() => import("./pages/Dashboard.tsx"));
+const Onboarding = lazy(() => import("./pages/Onboarding.tsx"));
+const Clients = lazy(() => import("./pages/Clients.tsx"));
+const ClientDetail = lazy(() => import("./pages/ClientDetail.tsx"));
+const Sessions = lazy(() => import("./pages/Sessions.tsx"));
+const Services = lazy(() => import("./pages/Services.tsx"));
+const Settings = lazy(() => import("./pages/Settings.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 
 // Simple loading fallback for route transitions
 function RouteLoading() {
   return (
     <div className="min-h-screen flex items-center justify-center">
-      <div className="animate-pulse text-muted-foreground">Loading...</div>
+      <div className="animate-pulse text-muted-foreground">Carregando…</div>
     </div>
   );
 }
@@ -125,10 +131,58 @@ createRoot(document.getElementById("root")!).render(
                 element={<AuthPage redirectAfterAuth="/dashboard" />}
               />
               <Route
+                path="/onboarding"
+                element={
+                  <RequireAuth>
+                    <Onboarding />
+                  </RequireAuth>
+                }
+              />
+              <Route
                 path="/dashboard"
                 element={
                   <RequireAuth>
                     <Dashboard />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/clientes"
+                element={
+                  <RequireAuth>
+                    <Clients />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/clientes/:id"
+                element={
+                  <RequireAuth>
+                    <ClientDetail />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/sessoes"
+                element={
+                  <RequireAuth>
+                    <Sessions />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/servicos"
+                element={
+                  <RequireAuth>
+                    <Services />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/configuracoes"
+                element={
+                  <RequireAuth>
+                    <Settings />
                   </RequireAuth>
                 }
               />
