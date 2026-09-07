@@ -49,6 +49,65 @@ export const accounts = query({
 
     const professionals = await ctx.db.query("professionals").collect();
     const payments = await ctx.db.query("payments").collect();
+    const clients = await ctx.db.query("clients").collect();
+    const sessions = await ctx.db.query("sessions").collect();
+    const notes = await ctx.db.query("clientNotes").collect();
+
+    // Usage per account: how much of the system each professional is using.
+    interface Usage {
+      clientsCount: number;
+      sessionsCount: number;
+      realizedCount: number;
+      scheduledCount: number;
+      lastActivityAt: number;
+    }
+    const usage = new Map<string, Usage>();
+    const touch = (professionalId: string, at: number) => {
+      const entry =
+        usage.get(professionalId) ??
+        {
+          clientsCount: 0,
+          sessionsCount: 0,
+          realizedCount: 0,
+          scheduledCount: 0,
+          lastActivityAt: 0,
+        };
+      entry.lastActivityAt = Math.max(entry.lastActivityAt, at);
+      usage.set(professionalId, entry);
+    };
+    for (const client of clients) {
+      const entry =
+        usage.get(client.professionalId) ??
+        ({
+          clientsCount: 0,
+          sessionsCount: 0,
+          realizedCount: 0,
+          scheduledCount: 0,
+          lastActivityAt: 0,
+        } satisfies Usage);
+      entry.clientsCount++;
+      entry.lastActivityAt = Math.max(entry.lastActivityAt, client.createdAt);
+      usage.set(client.professionalId, entry);
+    }
+    for (const session of sessions) {
+      const entry =
+        usage.get(session.professionalId) ??
+        ({
+          clientsCount: 0,
+          sessionsCount: 0,
+          realizedCount: 0,
+          scheduledCount: 0,
+          lastActivityAt: 0,
+        } satisfies Usage);
+      entry.sessionsCount++;
+      if (session.status === "realizada") entry.realizedCount++;
+      if (session.status === "agendada") entry.scheduledCount++;
+      entry.lastActivityAt = Math.max(entry.lastActivityAt, session._creationTime);
+      usage.set(session.professionalId, entry);
+    }
+    for (const note of notes) {
+      touch(note.professionalId, note.createdAt);
+    }
 
     const emailByUser = new Map<string, string>();
     for (const professional of professionals) {
@@ -70,6 +129,15 @@ export const accounts = query({
           professional._creationTime + TRIAL_DAYS * DAY_MS,
         paidUntil: professional.paidUntil,
         status: computeAccess(professional, now),
+        usage:
+          usage.get(professional._id) ??
+          {
+            clientsCount: 0,
+            sessionsCount: 0,
+            realizedCount: 0,
+            scheduledCount: 0,
+            lastActivityAt: 0,
+          },
       }))
       .sort((a, b) => b.createdAt - a.createdAt);
 
@@ -103,6 +171,14 @@ export const accounts = query({
         active: rows.filter((row) => row.status === "active").length,
         expired: rows.filter((row) => row.status === "expired").length,
         revenueCents: paidPayments.reduce((sum, payment) => sum + payment.amount, 0),
+        clientsCount: clients.length,
+        sessionsCount: sessions.length,
+        realizedSessionsCount: sessions.filter(
+          (session) => session.status === "realizada",
+        ).length,
+        scheduledSessionsCount: sessions.filter(
+          (session) => session.status === "agendada",
+        ).length,
       },
     };
   },

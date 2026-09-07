@@ -21,6 +21,7 @@ import { PLAN } from "@/lib/billing";
 import { formatBRL, formatDate } from "@/lib/format";
 import { useMutation, useQuery } from "convex/react";
 import {
+  CalendarCheck2,
   CircleAlert,
   CircleCheck,
   Clock3,
@@ -147,7 +148,7 @@ export default function Admin() {
 
       {/* Indicadores */}
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        <StatCard icon={Users} label="Contas" value={stats ? String(stats.total) : "…"} />
+        <StatCard icon={Users} label="Profissionais" value={stats ? String(stats.total) : "…"} />
         <StatCard icon={Clock3} label="Em teste" value={stats ? String(stats.trial) : "…"} />
         <StatCard
           icon={CircleCheck}
@@ -163,6 +164,25 @@ export default function Admin() {
           icon={CircleCheck}
           label="Recebido"
           value={stats ? formatBRL(stats.revenueCents / 100) : "…"}
+        />
+      </section>
+
+      {/* Uso da plataforma */}
+      <section className="grid gap-3 sm:grid-cols-3">
+        <StatCard
+          icon={Users}
+          label="Clientes cadastrados"
+          value={stats ? String(stats.clientsCount) : "…"}
+        />
+        <StatCard
+          icon={CalendarCheck2}
+          label="Sessões realizadas"
+          value={stats ? String(stats.realizedSessionsCount) : "…"}
+        />
+        <StatCard
+          icon={Clock3}
+          label="Sessões agendadas"
+          value={stats ? String(stats.scheduledSessionsCount) : "…"}
         />
       </section>
 
@@ -206,6 +226,8 @@ export default function Admin() {
                   <TableRow>
                     <TableHead>Negócio</TableHead>
                     <TableHead>Profissional</TableHead>
+                    <TableHead>Uso</TableHead>
+                    <TableHead>Última atividade</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Teste até</TableHead>
                     <TableHead>Acesso pago até</TableHead>
@@ -227,6 +249,18 @@ export default function Admin() {
                         <p className="text-xs text-muted-foreground">
                           desde {formatDate(row.createdAt)}
                         </p>
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        <p className="font-medium">{row.usage.clientsCount} clientes</p>
+                        <p className="text-xs text-muted-foreground">
+                          {row.usage.realizedCount} realizadas ·{" "}
+                          {row.usage.scheduledCount} agendadas
+                        </p>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {row.usage.lastActivityAt
+                          ? formatDate(row.usage.lastActivityAt)
+                          : "—"}
                       </TableCell>
                       <TableCell>
                         <StatusBadge status={row.status} />
