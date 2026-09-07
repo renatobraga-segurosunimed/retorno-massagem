@@ -26,7 +26,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, Navigate, useNavigate } from "react-router";
 import { toast } from "sonner";
 
 const METHOD_LABEL: Record<string, string> = {
@@ -118,6 +118,11 @@ export default function Subscription() {
         <Loader2 className="size-6 animate-spin text-muted-foreground" />
       </main>
     );
+  }
+
+  // No workspace yet — the initial setup flow creates one.
+  if (access === null) {
+    return <Navigate to="/onboarding" replace />;
   }
 
   const isActive = access.status === "active";

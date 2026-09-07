@@ -17,10 +17,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/convex/_generated/api";
-import { parseClientsCsv, type CsvClientRow } from "@/lib/csv";
+import {
+  downloadClientsTemplate,
+  parseClientsFile,
+  type CsvClientRow,
+} from "@/lib/csv";
 import { formatDaysAgo, initials } from "@/lib/format";
 import { useMutation, useQuery } from "convex/react";
 import {
+  FileDown,
   Loader2,
   Plus,
   Search,
@@ -303,8 +308,7 @@ export function ImportClientsDialog({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = async (file: File) => {
-    const text = await file.text();
-    const { rows, skipped } = parseClientsCsv(text);
+    const { rows, skipped } = await parseClientsFile(file);
     if (rows.length === 0) {
       toast.error(
         "Não encontramos clientes no arquivo. Use colunas como: nome, telefone, email.",
@@ -339,18 +343,49 @@ export function ImportClientsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Importar clientes de um CSV</DialogTitle>
+          <DialogTitle>Importar clientes de um arquivo</DialogTitle>
           <DialogDescription>
-            Uma linha por cliente, com colunas separadas por vírgula ou ponto
-            e vírgula. Aceita cabeçalho com nome, telefone e email — se não
-            houver cabeçalho, consideramos essa ordem.
+            Aceita planilhas Excel (.xlsx, .xls) e arquivos de texto (.csv,
+            .txt) separados por vírgula ou ponto e vírgula. Uma linha por
+            cliente.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4">
+          <div className="rounded-lg border border-border/70 bg-muted/40 p-3 text-xs text-muted-foreground">
+            <p className="font-medium text-foreground">Colunas aceitas</p>
+            <ul className="mt-1.5 grid gap-0.5">
+              <li>
+                <span className="font-medium text-foreground">nome</span> —
+                obrigatório
+              </li>
+              <li>
+                <span className="font-medium text-foreground">telefone</span> —
+                opcional, com DDD
+              </li>
+              <li>
+                <span className="font-medium text-foreground">email</span> —
+                opcional
+              </li>
+            </ul>
+            <p className="mt-2">
+              Com cabeçalho, as colunas podem estar em qualquer ordem. Sem
+              cabeçalho, usamos a ordem nome, telefone, email.
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="w-fit gap-2"
+            onClick={downloadClientsTemplate}
+          >
+            <FileDown className="size-4" aria-hidden />
+            Baixar modelo (.csv)
+          </Button>
           <Input
             ref={fileInputRef}
             type="file"
-            accept=".csv,.txt"
+            accept=".csv,.txt,.xlsx,.xls"
             className="cursor-pointer"
             onChange={(e) => {
               const file = e.target.files?.[0];

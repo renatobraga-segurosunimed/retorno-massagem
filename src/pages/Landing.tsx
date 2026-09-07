@@ -10,7 +10,6 @@ import {
   History,
   MessageCircleHeart,
   Phone,
-  Search,
   Sparkles,
   Upload,
 } from "lucide-react";
@@ -148,7 +147,7 @@ export default function Landing() {
                 </Button>
               </div>
               <p className="mt-4 text-sm text-muted-foreground">
-                Sem cartão de crédito. Configure seu espaço em 3 passos.
+                Grátis por 30 dias · sem cartão de crédito para começar.
               </p>
             </div>
 
@@ -295,19 +294,26 @@ export default function Landing() {
                 </div>
               ))}
             </div>
-            <div className="mt-10 flex flex-col items-start gap-3 rounded-2xl border border-dashed border-primary/30 bg-accent/40 p-6 sm:flex-row sm:items-center sm:justify-between">
+            <Link
+              to="/auth"
+              className="group mt-10 flex flex-col items-start gap-3 rounded-2xl border border-dashed border-primary/30 bg-accent/40 p-6 transition-colors hover:border-primary/60 sm:flex-row sm:items-center sm:justify-between"
+            >
               <div className="flex items-start gap-3">
                 <Upload className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />
                 <div>
                   <p className="text-sm font-semibold">Já tem uma base de clientes?</p>
                   <p className="mt-0.5 text-sm text-muted-foreground">
-                    Importe sua lista em CSV durante a configuração e comece a
-                    acompanhar os retornos imediatamente.
+                    Importe sua lista em CSV ou Excel (colunas: nome, telefone,
+                    e-mail) durante a configuração e comece a acompanhar os
+                    retornos imediatamente.
                   </p>
                 </div>
               </div>
-              <Search className="hidden size-4 text-muted-foreground sm:block" aria-hidden />
-            </div>
+              <ArrowRight
+                className="hidden size-5 shrink-0 text-primary transition-transform group-hover:translate-x-1 sm:block"
+                aria-hidden
+              />
+            </Link>
           </div>
         </section>
 

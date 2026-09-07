@@ -12,13 +12,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { api } from "@/convex/_generated/api";
 import type { Doc } from "@/convex/_generated/dataModel";
-import { parseClientsCsv, type CsvClientRow } from "@/lib/csv";
+import {
+  downloadClientsTemplate,
+  parseClientsFile,
+  type CsvClientRow,
+} from "@/lib/csv";
 import { formatBRL } from "@/lib/format";
 import { useMutation, useQuery } from "convex/react";
 import {
   ArrowLeft,
   ArrowRight,
   Check,
+  FileDown,
   Loader2,
   Plus,
   Sparkles,
@@ -493,8 +498,7 @@ function StepClients() {
   };
 
   const handleFile = async (file: File) => {
-    const text = await file.text();
-    const { rows, skipped } = parseClientsCsv(text);
+    const { rows, skipped } = await parseClientsFile(file);
     if (rows.length === 0) {
       toast.error(
         "Não encontramos clientes no arquivo. Use colunas como: nome, telefone, email.",
@@ -595,18 +599,31 @@ function StepClients() {
           <div className="flex items-start gap-3">
             <Upload className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />
             <div>
-              <p className="text-sm font-medium">Importar clientes de um CSV</p>
+              <p className="text-sm font-medium">
+                Importar clientes de um CSV ou Excel
+              </p>
               <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
-                Aceita colunas separadas por vírgula ou ponto e vírgula:
-                nome, telefone, email. Uma linha por cliente.
+                Formatos .csv, .txt e .xlsx. Colunas: nome (obrigatório),
+                telefone e email (opcionais) — com cabeçalho em qualquer
+                ordem, ou nessa ordem sem cabeçalho. Uma linha por cliente.
               </p>
             </div>
           </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="w-fit gap-2"
+            onClick={downloadClientsTemplate}
+          >
+            <FileDown className="size-4" aria-hidden />
+            Baixar modelo (.csv)
+          </Button>
           <div className="flex flex-wrap items-center gap-3">
             <Input
               ref={fileInputRef}
               type="file"
-              accept=".csv,.txt"
+              accept=".csv,.txt,.xlsx,.xls"
               className="max-w-xs cursor-pointer"
               onChange={(e) => {
                 const file = e.target.files?.[0];
