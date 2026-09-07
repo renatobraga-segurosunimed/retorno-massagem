@@ -20,6 +20,8 @@ const ClientDetail = lazy(() => import("./pages/ClientDetail.tsx"));
 const Sessions = lazy(() => import("./pages/Sessions.tsx"));
 const Services = lazy(() => import("./pages/Services.tsx"));
 const Settings = lazy(() => import("./pages/Settings.tsx"));
+const Subscription = lazy(() => import("./pages/Subscription.tsx"));
+const Admin = lazy(() => import("./pages/Admin.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 
 // Simple loading fallback for route transitions
@@ -161,7 +163,18 @@ createRoot(document.getElementById("root")!).render(
                 <Route path="/sessoes" element={<Sessions />} />
                 <Route path="/servicos" element={<Services />} />
                 <Route path="/configuracoes" element={<Settings />} />
+                <Route path="/admin" element={<Admin />} />
               </Route>
+              {/* Billing is outside the shell on purpose: after the trial ends
+                  it must stay reachable while the rest is blocked. */}
+              <Route
+                path="/assinatura"
+                element={
+                  <RequireAuth>
+                    <Subscription />
+                  </RequireAuth>
+                }
+              />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

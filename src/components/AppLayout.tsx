@@ -8,15 +8,19 @@ import {
 } from "@/components/ui/sheet";
 import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/use-auth";
+import { daysLeft } from "@/lib/billing";
+import { formatDate } from "@/lib/format";
 import { useQuery } from "convex/react";
 import {
   CalendarDays,
+  CreditCard,
   Flower2,
   LayoutDashboard,
   Loader2,
   LogOut,
   Menu,
   Settings,
+  ShieldCheck,
   Users,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
@@ -33,6 +37,7 @@ const NAV_ITEMS = [
   { to: "/clientes", label: "Clientes", icon: Users },
   { to: "/sessoes", label: "Sessões", icon: CalendarDays },
   { to: "/servicos", label: "Serviços", icon: Flower2 },
+  { to: "/assinatura", label: "Assinatura", icon: CreditCard },
   { to: "/configuracoes", label: "Configurações", icon: Settings },
 ];
 
@@ -46,6 +51,7 @@ function navLinkClass({ isActive }: { isActive: boolean }) {
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const professional = useQuery(api.professionals.getMine);
+  const access = useQuery(api.billing.myAccess);
   const { user, signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -61,6 +67,14 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
   if (professional === null || !professional.onboarded) {
     return <Navigate to="/onboarding" replace />;
+  }
+
+  // Paywall: after the trial ends without a payment, only the billing page
+  // (and the admin area) remain reachable.
+  const isBillingPage = location.pathname.startsWith("/assinatura");
+  const isAdminPage = location.pathname.startsWith("/admin");
+  if (access?.status === "expired" && !isBillingPage && !isAdminPage) {
+    return <Navigate to="/assinatura" replace />;
   }
 
   const currentLabel =
@@ -94,7 +108,33 @@ export function AppLayout({ children }: { children: ReactNode }) {
               {item.label}
             </NavLink>
           ))}
+          {access?.isAdmin && (
+            <NavLink to="/admin" className={navLinkClass}>
+              <ShieldCheck className="size-4" aria-hidden />
+              Administração
+            </NavLink>
+          )}
         </nav>
+
+        {access && (
+          <Link
+            to="/assinatura"
+            className={`mx-4 mb-3 block rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
+              access.status === "expired"
+                ? "border-rose-500/30 bg-rose-500/10 text-rose-700 hover:bg-rose-500/15 dark:text-rose-300"
+                : access.status === "active"
+                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/15 dark:text-emerald-300"
+                  : "border-primary/25 bg-primary/5 text-primary hover:bg-primary/10"
+            }`}
+          >
+            {access.status === "trial" &&
+              `Teste grátis · ${daysLeft(access.trialEndsAt, Date.now())} dia(s) restante(s)`}
+            {access.status === "active" &&
+              `Assinatura ativa até ${formatDate(access.paidUntil ?? Date.now())}`}
+            {access.status === "expired" &&
+              "Teste encerrado · assine para voltar ao painel"}
+          </Link>
+        )}
         <div className="border-t border-sidebar-border px-4 py-4">
           <p className="truncate text-xs font-medium text-sidebar-foreground">
             {professional.professionalName}
@@ -153,6 +193,16 @@ export function AppLayout({ children }: { children: ReactNode }) {
                     {item.label}
                   </NavLink>
                 ))}
+                {access?.isAdmin && (
+                  <NavLink
+                    to="/admin"
+                    className={navLinkClass}
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    <ShieldCheck className="size-4" aria-hidden />
+                    Administração
+                  </NavLink>
+                )}
               </nav>
               <div className="border-t px-4 py-3">
                 <Button

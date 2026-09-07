@@ -2,6 +2,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
+import { TRIAL_DAYS } from "../lib/billing";
 
 /** Returns the signed-in user's workspace, or null when none exists yet. */
 export async function getMyProfessionalDoc(
@@ -72,6 +73,13 @@ export const finishOnboarding = mutation({
     }
     if (!professional.onboarded) {
       await ctx.db.patch(professional._id, { onboarded: true });
+    }
+    // Starts the 30-day free trial on first completion (keeps the original
+    // date if onboarding is redone later).
+    if (professional.trialEndsAt === undefined) {
+      await ctx.db.patch(professional._id, {
+        trialEndsAt: Date.now() + TRIAL_DAYS * 86_400_000,
+      });
     }
     return professional._id;
   },

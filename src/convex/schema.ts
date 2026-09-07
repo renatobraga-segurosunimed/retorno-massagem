@@ -40,6 +40,8 @@ const schema = defineSchema(
       city: v.optional(v.string()),
       phone: v.optional(v.string()),
       onboarded: v.boolean(),
+      trialEndsAt: v.optional(v.number()), // end of the 30-day free trial
+      paidUntil: v.optional(v.number()), // access granted by the latest paid period
     }).index("by_user", ["userId"]),
 
     // Service catalog offered by the professional.
@@ -88,6 +90,34 @@ const schema = defineSchema(
       text: v.string(),
       createdAt: v.number(),
     }).index("by_client", ["clientId"]),
+
+    // Platform subscription payments (Stripe checkout: PIX or credit card,
+    // plus manual activations performed by the platform admin).
+    payments: defineTable({
+      professionalId: v.id("professionals"),
+      amount: v.number(), // in cents
+      method: v.optional(
+        v.union(
+          v.literal("credit_card"),
+          v.literal("pix"),
+          v.literal("manual"),
+          v.literal("outros"),
+        ),
+      ),
+      status: v.union(
+        v.literal("pending"),
+        v.literal("paid"),
+        v.literal("failed"),
+      ),
+      provider: v.optional(v.string()),
+      providerPaymentId: v.optional(v.string()),
+      externalReference: v.optional(v.string()),
+      periodDays: v.number(),
+      createdAt: v.number(),
+      paidAt: v.optional(v.number()),
+    })
+      .index("by_professional", ["professionalId"])
+      .index("by_external_reference", ["externalReference"]),
   },
   {
     schemaValidation: false,
