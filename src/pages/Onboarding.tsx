@@ -102,7 +102,7 @@ export default function Onboarding() {
         </div>
 
         <div className="mt-8">
-          {step === 1 && professional !== null && (
+          {step === 1 && professional !== undefined && (
             <StepSpace
               professional={professional}
               onDone={() => setStep(2)}
@@ -116,7 +116,7 @@ export default function Onboarding() {
   );
 }
 
-type Professional = Doc<"professionals">;
+type Professional = Doc<"professionals"> | null;
 
 function StepSpace({
   professional,
@@ -127,12 +127,14 @@ function StepSpace({
 }) {
   const save = useMutation(api.professionals.saveOnboarding);
   const navigate = useNavigate();
-  const [businessName, setBusinessName] = useState(professional.businessName);
-  const [professionalName, setProfessionalName] = useState(
-    professional.professionalName,
+  const [businessName, setBusinessName] = useState(
+    professional?.businessName ?? "",
   );
-  const [city, setCity] = useState(professional.city ?? "");
-  const [phone, setPhone] = useState(professional.phone ?? "");
+  const [professionalName, setProfessionalName] = useState(
+    professional?.professionalName ?? "",
+  );
+  const [city, setCity] = useState(professional?.city ?? "");
+  const [phone, setPhone] = useState(professional?.phone ?? "");
   const [saving, setSaving] = useState(false);
 
   const handleSubmit = async (event: React.FormEvent) => {
