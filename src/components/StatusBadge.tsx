@@ -22,7 +22,7 @@ const RETURN_CONFIG: Record<ReturnStatus, { label: string; className: string }> 
         "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-transparent",
     },
     atrasado: {
-      label: "Atrasada",
+      label: "Em atraso",
       className:
         "bg-rose-500/15 text-rose-700 dark:text-rose-300 border-transparent",
     },

@@ -98,7 +98,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
     } catch (error) {
       console.error("Guest login error:", error);
       setError(
-        `Não foi possível entrar como convidada: ${
+        `Não foi possível entrar como convidado(a): ${
           error instanceof Error ? error.message : "erro desconhecido"
         }`,
       );
@@ -181,7 +181,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                         disabled={isLoading}
                       >
                         <UserRoundCheck className="mr-2 h-4 w-4" />
-                        Entrar como convidada
+                        Entrar como convidado(a)
                       </Button>
                       <p className="mt-2 text-center text-xs text-muted-foreground">
                         O modo convidada cria um espaço temporário para você

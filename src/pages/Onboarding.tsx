@@ -11,6 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { api } from "@/convex/_generated/api";
+import type { Doc } from "@/convex/_generated/dataModel";
 import { parseClientsCsv, type CsvClientRow } from "@/lib/csv";
 import { formatBRL } from "@/lib/format";
 import { useMutation, useQuery } from "convex/react";
@@ -115,9 +116,7 @@ export default function Onboarding() {
   );
 }
 
-type Professional = NonNullable<
-  ReturnType<typeof useQuery<typeof api.professionals.getMine>>
->;
+type Professional = Doc<"professionals">;
 
 function StepSpace({
   professional,

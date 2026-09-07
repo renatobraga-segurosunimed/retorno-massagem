@@ -71,7 +71,7 @@ export default function Dashboard() {
         />
         <StatCard
           icon={CircleUserRound}
-          label="Clientes atrasadas"
+          label="Clientes em atraso"
           value={stats ? String(stats.overdueCount) : "…"}
           hint="além do período de retorno"
           tone={stats && stats.overdueCount > 0 ? "attention" : "default"}

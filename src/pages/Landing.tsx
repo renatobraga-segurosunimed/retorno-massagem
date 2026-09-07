@@ -160,7 +160,7 @@ export default function Landing() {
                     Clientes para entrar em contato
                   </p>
                   <Badge className="bg-rose-500/15 text-rose-700 dark:text-rose-300 border-transparent" variant="secondary">
-                    2 atrasadas
+                    2 em atraso
                   </Badge>
                 </div>
                 <div className="mt-4 space-y-3">
@@ -173,7 +173,7 @@ export default function Landing() {
                         </p>
                       </div>
                       <Badge variant="secondary" className="bg-rose-500/15 text-rose-700 dark:text-rose-300 border-transparent">
-                        Atrasada
+                        Em atraso
                       </Badge>
                     </div>
                     <p className="mt-2 text-xs text-muted-foreground">

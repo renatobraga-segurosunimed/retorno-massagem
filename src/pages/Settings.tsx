@@ -155,7 +155,7 @@ export default function Settings() {
             <BrandMark className="size-10 rounded-full" />
             <div className="min-w-0">
               <p className="truncate text-sm font-medium">
-                {user?.name || professional.professionalName}
+                {user?.name || professional?.professionalName}
               </p>
               <p className="truncate text-sm text-muted-foreground">
                 {user?.email ?? "Conta sem e-mail"}
