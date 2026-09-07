@@ -1,12 +1,13 @@
 import '@vly-ai/integrations';
 import { Toaster } from "@/components/ui/sonner";
+import { AppLayout } from "@/components/AppLayout";
 import { RequireAuth } from "@/components/RequireAuth";
 import { VlyToolbar } from "../vly-toolbar-readonly.tsx";
 import { ConvexAuthProvider } from "@convex-dev/auth/react";
 import { ConvexReactClient } from "convex/react";
 import React, { StrictMode, useEffect, lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Route, Routes, useLocation } from "react-router";
+import { BrowserRouter, Outlet, Route, Routes, useLocation } from "react-router";
 import "./index.css";
 
 // Lazy load route components for better code splitting
@@ -27,6 +28,18 @@ function RouteLoading() {
     <div className="min-h-screen flex items-center justify-center">
       <div className="animate-pulse text-muted-foreground">Carregando…</div>
     </div>
+  );
+}
+
+/** Shared shell for authenticated pages: auth gate + app layout (sidebar,
+ *  mobile header) + the redirect to /onboarding when no workspace exists yet. */
+function ProtectedLayout() {
+  return (
+    <RequireAuth>
+      <AppLayout>
+        <Outlet />
+      </AppLayout>
+    </RequireAuth>
   );
 }
 
@@ -138,54 +151,17 @@ createRoot(document.getElementById("root")!).render(
                   </RequireAuth>
                 }
               />
-              <Route
-                path="/dashboard"
-                element={
-                  <RequireAuth>
-                    <Dashboard />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="/clientes"
-                element={
-                  <RequireAuth>
-                    <Clients />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="/clientes/:id"
-                element={
-                  <RequireAuth>
-                    <ClientDetail />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="/sessoes"
-                element={
-                  <RequireAuth>
-                    <Sessions />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="/servicos"
-                element={
-                  <RequireAuth>
-                    <Services />
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="/configuracoes"
-                element={
-                  <RequireAuth>
-                    <Settings />
-                  </RequireAuth>
-                }
-              />
+              {/* Protected app pages share the shell. /onboarding stays
+                  outside: AppLayout redirects here when there is no workspace,
+                  and nesting it would loop. */}
+              <Route element={<ProtectedLayout />}>
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/clientes" element={<Clients />} />
+                <Route path="/clientes/:id" element={<ClientDetail />} />
+                <Route path="/sessoes" element={<Sessions />} />
+                <Route path="/servicos" element={<Services />} />
+                <Route path="/configuracoes" element={<Settings />} />
+              </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

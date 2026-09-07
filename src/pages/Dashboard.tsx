@@ -27,7 +27,12 @@ import { Link } from "react-router";
 
 export default function Dashboard() {
   const professional = useQuery(api.professionals.getMine);
-  const summary = useQuery(api.dashboard.summary, {});
+  // Skip until the workspace is confirmed — the server handler throws for
+  // users who have not finished onboarding, which would crash the page.
+  const summary = useQuery(
+    api.dashboard.summary,
+    professional ? {} : "skip",
+  );
   const [sessionDialog, setSessionDialog] = useState<{
     open: boolean;
     clientId?: Id<"clients">;
