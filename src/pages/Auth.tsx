@@ -46,7 +46,7 @@ const STEP_COPY: Record<
   { title: string; description: string }
 > = {
   signIn: {
-    title: "Entrar no Retorno",
+    title: "Entrar no Retorno Massagem",
     description: "Use seu e-mail e senha para acessar sua conta.",
   },
   signUp: {
