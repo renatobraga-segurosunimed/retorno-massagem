@@ -147,8 +147,9 @@ export default function Settings() {
         <CardHeader>
           <CardTitle className="font-display text-lg">Sua conta</CardTitle>
           <CardDescription>
-            Você entra no Retorno com e-mail e senha. Perdeu o acesso? Use
-            “Esqueceu a senha?” na tela de login para redefinir.
+            Você entra no Retorno com e-mail e senha verificados ou com Google.
+            Perdeu o acesso? Use “Esqueceu a senha?” na tela de login para
+            redefinir.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

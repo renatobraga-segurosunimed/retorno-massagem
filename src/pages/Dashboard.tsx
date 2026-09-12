@@ -105,7 +105,7 @@ export default function Dashboard() {
             </p>
           </div>
           <Button asChild variant="ghost" size="sm" className="hidden gap-1.5 sm:inline-flex">
-            <Link to="/clientes">
+            <Link to="/app/clientes">
               Ver todos
               <ArrowRight className="size-4" aria-hidden />
             </Link>
@@ -128,7 +128,7 @@ export default function Dashboard() {
                     os retornos.
                   </p>
                   <Button asChild className="gap-2">
-                    <Link to="/clientes">
+                    <Link to="/app/clientes">
                       <Users className="size-4" aria-hidden />
                       Ir para Clientes
                     </Link>
@@ -169,7 +169,7 @@ export default function Dashboard() {
                         </span>
                         <div className="min-w-0">
                           <Link
-                            to={`/clientes/${opportunity.clientId}`}
+                            to={`/app/clientes/${opportunity.clientId}`}
                             className="block truncate text-sm font-semibold hover:underline"
                           >
                             {opportunity.name}
@@ -241,7 +241,7 @@ export default function Dashboard() {
                         variant="ghost"
                         className="ml-auto gap-1 text-muted-foreground"
                       >
-                        <Link to={`/clientes/${opportunity.clientId}`}>
+                        <Link to={`/app/clientes/${opportunity.clientId}`}>
                           Abrir
                           <ArrowRight className="size-4" aria-hidden />
                         </Link>
@@ -263,7 +263,7 @@ export default function Dashboard() {
               Próximas sessões
             </h2>
             <Button asChild variant="ghost" size="sm" className="hidden gap-1.5 sm:inline-flex">
-              <Link to="/sessoes">
+              <Link to="/app/agenda">
                 Ver agenda
                 <ArrowRight className="size-4" aria-hidden />
               </Link>
@@ -277,7 +277,7 @@ export default function Dashboard() {
               >
                 <div className="min-w-0">
                   <Link
-                    to={`/clientes/${session.clientId}`}
+                    to={`/app/clientes/${session.clientId}`}
                     className="text-sm font-medium hover:underline"
                   >
                     {session.clientName}

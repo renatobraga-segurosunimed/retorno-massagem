@@ -12,9 +12,11 @@ import { daysLeft } from "@/lib/billing";
 import { formatDate } from "@/lib/format";
 import { useQuery } from "convex/react";
 import {
+  CalendarClock,
   CalendarDays,
   CreditCard,
   Flower2,
+  History,
   LayoutDashboard,
   Loader2,
   LogOut,
@@ -33,12 +35,14 @@ import {
 } from "react-router";
 
 const NAV_ITEMS = [
-  { to: "/dashboard", label: "Painel", icon: LayoutDashboard },
-  { to: "/clientes", label: "Clientes", icon: Users },
-  { to: "/sessoes", label: "Sessões", icon: CalendarDays },
-  { to: "/servicos", label: "Serviços", icon: Flower2 },
-  { to: "/assinatura", label: "Assinatura", icon: CreditCard },
-  { to: "/configuracoes", label: "Configurações", icon: Settings },
+  { to: "/app/dashboard", label: "Painel", icon: LayoutDashboard },
+  { to: "/app/clientes", label: "Clientes", icon: Users },
+  { to: "/app/atendimentos", label: "Atendimentos", icon: CalendarDays },
+  { to: "/app/retornos", label: "Retornos", icon: History },
+  { to: "/app/agenda", label: "Agenda", icon: CalendarClock },
+  { to: "/app/servicos", label: "Serviços", icon: Flower2 },
+  { to: "/app/assinatura", label: "Assinatura", icon: CreditCard },
+  { to: "/app/configuracoes", label: "Configurações", icon: Settings },
 ];
 
 function navLinkClass({ isActive }: { isActive: boolean }) {
@@ -66,15 +70,15 @@ export function AppLayout({ children }: { children: ReactNode }) {
   }
 
   if (professional === null || !professional.onboarded) {
-    return <Navigate to="/onboarding" replace />;
+    return <Navigate to="/app/onboarding" replace />;
   }
 
   // Paywall: after the trial ends without a payment, only the billing page
   // (and the admin area) remain reachable.
-  const isBillingPage = location.pathname.startsWith("/assinatura");
-  const isAdminPage = location.pathname.startsWith("/admin");
+  const isBillingPage = location.pathname.startsWith("/app/assinatura");
+  const isAdminPage = location.pathname.startsWith("/app/admin");
   if (access?.status === "expired" && !isBillingPage && !isAdminPage) {
-    return <Navigate to="/assinatura" replace />;
+    return <Navigate to="/app/assinatura" replace />;
   }
 
   const currentLabel =
@@ -90,7 +94,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
     <div className="min-h-screen bg-background">
       {/* Desktop sidebar */}
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-sidebar-border bg-sidebar lg:flex">
-        <Link className="flex items-center gap-3 px-6 pb-5 pt-6" to="/dashboard">
+        <Link className="flex items-center gap-3 px-6 pb-5 pt-6" to="/app/dashboard">
           <BrandMark className="size-9 rounded-lg" />
           <div className="min-w-0">
             <p className="font-display text-[15px] font-semibold leading-tight">
@@ -109,7 +113,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             </NavLink>
           ))}
           {access?.isAdmin && (
-            <NavLink to="/admin" className={navLinkClass}>
+            <NavLink to="/app/admin" className={navLinkClass}>
               <ShieldCheck className="size-4" aria-hidden />
               Administração
             </NavLink>
@@ -118,7 +122,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
         {access && (
           <Link
-            to="/assinatura"
+            to="/app/assinatura"
             className={`mx-4 mb-3 block rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${
               access.status === "expired"
                 ? "border-rose-500/30 bg-rose-500/10 text-rose-700 hover:bg-rose-500/15 dark:text-rose-300"
@@ -156,7 +160,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
       {/* Mobile header */}
       <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b bg-background/95 px-4 py-3 backdrop-blur lg:hidden">
-        <Link to="/dashboard" className="flex items-center gap-2">
+        <Link to="/app/dashboard" className="flex items-center gap-2">
           <BrandMark className="size-8 rounded-lg" />
           <span className="font-display text-sm font-semibold">Retorno</span>
         </Link>
@@ -195,7 +199,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 ))}
                 {access?.isAdmin && (
                   <NavLink
-                    to="/admin"
+                    to="/app/admin"
                     className={navLinkClass}
                     onClick={() => setMenuOpen(false)}
                   >

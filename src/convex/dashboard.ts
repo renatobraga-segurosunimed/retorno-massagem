@@ -122,3 +122,69 @@ export const summary = query({
     };
   },
 });
+
+/**
+ * Everything the dedicated Retornos page needs: every client currently due
+ * or overdue, without the Painel's top-8 cap.
+ */
+export const returns = query({
+  args: {},
+  handler: async (ctx) => {
+    const professional = await requireProfessional(ctx);
+
+    const clients = await ctx.db
+      .query("clients")
+      .withIndex("by_professional", (q) =>
+        q.eq("professionalId", professional._id),
+      )
+      .collect();
+    const sessions = await ctx.db
+      .query("sessions")
+      .withIndex("by_professional", (q) =>
+        q.eq("professionalId", professional._id),
+      )
+      .collect();
+
+    const realizedByClient = new Map<string, number[]>();
+    for (const session of sessions) {
+      if (session.status !== "realizada") continue;
+      const dates = realizedByClient.get(session.clientId) ?? [];
+      dates.push(session.date);
+      realizedByClient.set(session.clientId, dates);
+    }
+
+    const now = Date.now();
+    const opportunities = clients
+      .map((client) => ({
+        client,
+        pattern: computeReturnPattern(
+          realizedByClient.get(client._id) ?? [],
+          now,
+        ),
+      }))
+      .filter(
+        (entry) =>
+          entry.pattern.status === "atrasado" ||
+          entry.pattern.status === "atencao",
+      )
+      .sort(
+        (a, b) => (b.pattern.daysOverdue ?? 0) - (a.pattern.daysOverdue ?? 0),
+      )
+      .map((entry) => ({
+        clientId: entry.client._id,
+        name: entry.client.name,
+        phone: entry.client.phone,
+        completedCount: entry.pattern.completedCount,
+        avgIntervalDays: entry.pattern.avgIntervalDays,
+        daysSinceLast: entry.pattern.daysSinceLast,
+        daysOverdue: entry.pattern.daysOverdue,
+        lastSessionAt: entry.pattern.lastSessionAt,
+        status: entry.pattern.status,
+      }));
+
+    return {
+      clientsCount: clients.length,
+      opportunities,
+    };
+  },
+});
