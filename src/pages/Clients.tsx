@@ -139,7 +139,7 @@ export default function Clients() {
             <li key={client._id}>
               <button
                 type="button"
-                onClick={() => navigate(`/clientes/${client._id}`)}
+                onClick={() => navigate(`/app/clientes/${client._id}`)}
                 className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-muted/50"
               >
                 <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">

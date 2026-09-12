@@ -58,7 +58,7 @@ export default function Onboarding() {
   }
 
   if (professional?.onboarded) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/app/dashboard" replace />;
   }
 
   return (
@@ -533,7 +533,7 @@ function StepClients() {
     try {
       await finish({});
       toast.success("Tudo pronto. Bem-vindo(a) ao Retorno!");
-      navigate("/dashboard");
+      navigate("/app/dashboard");
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Não foi possível concluir.",

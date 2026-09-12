@@ -20,6 +20,7 @@ import {
   Loader2,
   Lock,
   Mail,
+  MailCheck,
   UserRoundCheck,
 } from "lucide-react";
 import { Suspense, useEffect, useState } from "react";
@@ -27,11 +28,13 @@ import { useNavigate, useSearchParams } from "react-router";
 
 interface AuthProps {
   redirectAfterAuth?: string;
+  /** Which screen opens first: login ("signIn") or signup ("signUp"). */
+  initialStep?: Step;
 }
 
 function resolveRedirectAfterAuth(
   returnTo: string | null,
-  fallback = "/dashboard",
+  fallback = "/app/dashboard",
 ) {
   if (returnTo?.startsWith("/") && !returnTo.startsWith("//")) {
     return returnTo;
@@ -39,7 +42,7 @@ function resolveRedirectAfterAuth(
   return fallback;
 }
 
-type Step = "signIn" | "signUp" | "forgot" | "reset";
+type Step = "signIn" | "signUp" | "forgot" | "reset" | "verify";
 
 const STEP_COPY: Record<
   Step,
@@ -52,7 +55,7 @@ const STEP_COPY: Record<
   signUp: {
     title: "Criar sua conta",
     description:
-      "Cadastre-se com e-mail e senha para acessar o Retorno em qualquer dispositivo.",
+      "Cadastre-se com e-mail e senha. Em seguida, você confirma seu e-mail com um código.",
   },
   forgot: {
     title: "Recuperar acesso",
@@ -64,7 +67,36 @@ const STEP_COPY: Record<
     description:
       "Digite o código de 6 dígitos enviado por e-mail e escolha uma nova senha.",
   },
+  verify: {
+    title: "Verifique seu e-mail",
+    description:
+      "Enviamos um código de 6 dígitos para confirmar seu e-mail. Ele expira em 15 minutos.",
+  },
 };
+
+/** Google "G" logo for the sign-in button. */
+function GoogleLogo({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
+      <path
+        fill="#4285F4"
+        d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47a5.57 5.57 0 0 1-2.4 3.58v3h3.86c2.26-2.09 3.56-5.17 3.56-8.82Z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.86-3c-1.08.72-2.45 1.16-4.07 1.16-3.13 0-5.78-2.11-6.73-4.96H1.29v3.09A11.99 11.99 0 0 0 12 24Z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M5.27 14.29A7.2 7.2 0 0 1 4.89 12c0-.8.14-1.57.38-2.29V6.62H1.29a11.99 11.99 0 0 0 0 10.76l3.98-3.09Z"
+      />
+      <path
+        fill="#EA4335"
+        d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.69 1.29 6.62l3.98 3.09C6.22 6.86 8.87 4.75 12 4.75Z"
+      />
+    </svg>
+  );
+}
 
 /** Password input with a show/hide toggle. */
 function PasswordField({
@@ -112,7 +144,7 @@ function PasswordField({
   );
 }
 
-function Auth({ redirectAfterAuth }: AuthProps = {}) {
+function Auth({ redirectAfterAuth, initialStep = "signIn" }: AuthProps = {}) {
   const { isLoading: authLoading, isAuthenticated, signIn } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -121,12 +153,13 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
     redirectAfterAuth,
   );
 
-  const [step, setStep] = useState<Step>("signIn");
+  const [step, setStep] = useState<Step>(initialStep);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [code, setCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
 
@@ -149,17 +182,43 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
     setStep(next);
   };
 
+  /** Starts the Google OAuth flow. The provider reads its credentials from
+   *  the AUTH_GOOGLE_ID / AUTH_GOOGLE_SECRET Convex environment variables. */
+  const handleGoogleSignIn = async () => {
+    setIsGoogleLoading(true);
+    clearFeedback();
+    try {
+      await signIn("google", { redirectTo: redirect });
+      // The client redirects the browser to Google; nothing to do here.
+    } catch (err) {
+      setError(
+        `Não foi possível iniciar o login com Google: ${
+          err instanceof Error ? err.message : "erro desconhecido"
+        }`,
+      );
+      setIsGoogleLoading(false);
+    }
+  };
+
   const handleSignIn = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsLoading(true);
     clearFeedback();
     try {
-      await signIn("password", {
+      const result = await signIn("password", {
         email: email.trim(),
         password,
         flow: "signIn",
       });
-      navigate(redirect);
+      if (result.signingIn) {
+        navigate(redirect);
+      } else {
+        // E-mail ainda não verificado: o servidor enviou um novo código em
+        // vez de iniciar a sessão. Mostre a etapa de verificação.
+        setIsLoading(false);
+        setInfo(null);
+        setStep("verify");
+      }
     } catch {
       setError("E-mail ou senha incorretos.");
       setIsLoading(false);
@@ -184,7 +243,10 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
         password,
         flow: "signUp",
       });
-      navigate(redirect);
+      // With e-mail verification enabled, signUp does NOT sign the user in:
+      // it sends a 6-digit code and waits for the "email-verification" flow.
+      setInfo(null);
+      setStep("verify");
     } catch (err) {
       const message = err instanceof Error ? err.message : "";
       setError(
@@ -194,6 +256,48 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
       );
       setIsLoading(false);
     }
+  };
+
+  /** Verifies the 6-digit code sent after signup. On success the e-mail is
+   *  confirmed and the user is signed in. */
+  const handleVerify = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (code.length !== 6) {
+      setError("Digite o código de 6 dígitos enviado por e-mail.");
+      return;
+    }
+    setIsLoading(true);
+    clearFeedback();
+    try {
+      await signIn("password", {
+        email: email.trim(),
+        code,
+        flow: "email-verification",
+      });
+      navigate(redirect);
+    } catch {
+      setError("Código inválido ou expirado. Solicite um novo código.");
+      setIsLoading(false);
+    }
+  };
+
+  /** Resends the signup/login verification code. Re-running the signIn flow
+   *  is safe: with the correct password it just re-sends the code while the
+   *  account remains unverified. */
+  const resendVerificationCode = async () => {
+    setIsLoading(true);
+    clearFeedback();
+    try {
+      await signIn("password", {
+        email: email.trim(),
+        password,
+        flow: "signIn",
+      });
+      setInfo("Um novo código foi enviado.");
+    } catch {
+      setError("Não foi possível reenviar o código. Tente novamente.");
+    }
+    setIsLoading(false);
   };
 
   /** Requests the reset code. The same message is shown whether or not the
@@ -401,6 +505,66 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
               </form>
             )}
 
+            {step === "verify" && (
+              <form onSubmit={handleVerify}>
+                <CardContent className="grid gap-4">
+                  <input
+                    type="hidden"
+                    autoComplete="email"
+                    value={email}
+                    readOnly
+                  />
+                  <div className="flex items-center gap-2 rounded-lg bg-muted p-3 text-sm text-muted-foreground">
+                    <MailCheck className="size-4 shrink-0 text-primary" />
+                    <span>
+                      Enviamos um código para <strong>{email}</strong>
+                    </span>
+                  </div>
+                  <div className="grid justify-items-center gap-2">
+                    <Label htmlFor="verify-code">Código de 6 dígitos</Label>
+                    <InputOTP
+                      id="verify-code"
+                      value={code}
+                      onChange={setCode}
+                      maxLength={6}
+                      disabled={isLoading}
+                    >
+                      <InputOTPGroup>
+                        {Array.from({ length: 6 }).map((_, index) => (
+                          <InputOTPSlot key={index} index={index} />
+                        ))}
+                      </InputOTPGroup>
+                    </InputOTP>
+                    <button
+                      type="button"
+                      className="text-xs font-medium text-primary hover:underline"
+                      onClick={resendVerificationCode}
+                      disabled={isLoading}
+                    >
+                      Reenviar código
+                    </button>
+                  </div>
+                  {error && <p className="text-sm text-red-500">{error}</p>}
+                  {info && (
+                    <p className="text-sm text-muted-foreground">{info}</p>
+                  )}
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 size-4 animate-spin" />
+                        Verificando…
+                      </>
+                    ) : (
+                      <>
+                        Confirmar e-mail
+                        <ArrowRight className="ml-2 size-4" />
+                      </>
+                    )}
+                  </Button>
+                </CardContent>
+              </form>
+            )}
+
             {step === "forgot" && (
               <form onSubmit={requestResetCode}>
                 <CardContent className="grid gap-4">
@@ -511,33 +675,60 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
               </form>
             )}
 
-            <CardContent className="pb-2">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
+            {step !== "verify" && (
+              <CardContent className="pb-2">
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-card px-2 text-muted-foreground">ou</span>
+                  </div>
                 </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-card px-2 text-muted-foreground">ou</span>
-                </div>
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                className="mt-4 w-full"
-                onClick={handleGuestLogin}
-                disabled={isLoading}
-              >
-                <UserRoundCheck className="mr-2 size-4" />
-                Entrar como convidado(a)
-              </Button>
-              <p className="mt-2 text-center text-xs text-muted-foreground">
-                O modo convidado(a) cria um espaço temporário para você
-                experimentar o Retorno.
-              </p>
-            </CardContent>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="mt-4 w-full"
+                  onClick={handleGoogleSignIn}
+                  disabled={isGoogleLoading || isLoading}
+                >
+                  {isGoogleLoading ? (
+                    <Loader2 className="mr-2 size-4 animate-spin" />
+                  ) : (
+                    <GoogleLogo className="mr-2 size-4" />
+                  )}
+                  Continuar com Google
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="mt-2 w-full"
+                  onClick={handleGuestLogin}
+                  disabled={isLoading || isGoogleLoading}
+                >
+                  <UserRoundCheck className="mr-2 size-4" />
+                  Entrar como convidado(a)
+                </Button>
+                <p className="mt-2 text-center text-xs text-muted-foreground">
+                  O modo convidado(a) cria um espaço temporário para você
+                  experimentar o Retorno.
+                </p>
+              </CardContent>
+            )}
 
             <CardFooter className="flex-col gap-1 pb-4 pt-2">
-              {step === "signIn" ? (
+              {step === "verify" ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="w-full gap-2"
+                  onClick={() => goTo("signIn")}
+                  disabled={isLoading}
+                >
+                  <ArrowLeft className="size-4" aria-hidden />
+                  Usar outro e-mail
+                </Button>
+              ) : step === "signIn" ? (
                 <Button
                   type="button"
                   variant="ghost"

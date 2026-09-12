@@ -122,7 +122,7 @@ export default function Subscription() {
 
   // No workspace yet — the initial setup flow creates one.
   if (access === null) {
-    return <Navigate to="/onboarding" replace />;
+    return <Navigate to="/app/onboarding" replace />;
   }
 
   const isActive = access.status === "active";
@@ -195,7 +195,7 @@ export default function Subscription() {
                 </p>
               </div>
               <Button asChild size="sm" className="shrink-0">
-                <Link to="/dashboard">Ir para o painel</Link>
+                <Link to="/app/dashboard">Ir para o painel</Link>
               </Button>
             </CardContent>
           </Card>

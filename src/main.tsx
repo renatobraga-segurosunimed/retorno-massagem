@@ -7,17 +7,18 @@ import { ConvexAuthProvider } from "@convex-dev/auth/react";
 import { ConvexReactClient } from "convex/react";
 import React, { StrictMode, useEffect, lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Outlet, Route, Routes, useLocation } from "react-router";
+import { BrowserRouter, Navigate, Outlet, Route, Routes, useParams, useLocation } from "react-router";
 import "./index.css";
 
 // Lazy load route components for better code splitting
-const Landing = lazy(() => import("./pages/Landing.tsx"));
+const LandingPage = lazy(() => import("./landing/LandingPage.tsx"));
 const AuthPage = lazy(() => import("./pages/Auth.tsx"));
 const Dashboard = lazy(() => import("./pages/Dashboard.tsx"));
 const Onboarding = lazy(() => import("./pages/Onboarding.tsx"));
 const Clients = lazy(() => import("./pages/Clients.tsx"));
 const ClientDetail = lazy(() => import("./pages/ClientDetail.tsx"));
 const Sessions = lazy(() => import("./pages/Sessions.tsx"));
+const Returns = lazy(() => import("./pages/Returns.tsx"));
 const Services = lazy(() => import("./pages/Services.tsx"));
 const Settings = lazy(() => import("./pages/Settings.tsx"));
 const Subscription = lazy(() => import("./pages/Subscription.tsx"));
@@ -101,6 +102,12 @@ class RootErrorBoundary extends React.Component<
   }
 }
 
+/** Keeps old deep links alive: /clientes/:id → /app/clientes/:id. */
+function LegacyClientRedirect() {
+  const { id } = useParams();
+  return <Navigate to={`/app/clientes/${id}`} replace />;
+}
+
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
 
 
@@ -140,41 +147,97 @@ createRoot(document.getElementById("root")!).render(
           <RouteSyncer />
           <Suspense fallback={<RouteLoading />}>
             <Routes>
-              <Route path="/" element={<Landing />} />
+              {/* ── Public marketing site ── */}
+              <Route path="/" element={<LandingPage />} />
+
+              {/* ── Public auth flows ── */}
               <Route
-                path="/auth"
-                element={<AuthPage redirectAfterAuth="/dashboard" />}
+                path="/login"
+                element={<AuthPage redirectAfterAuth="/app/dashboard" />}
               />
               <Route
-                path="/onboarding"
+                path="/cadastro"
+                element={
+                  <AuthPage redirectAfterAuth="/app/dashboard" initialStep="signUp" />
+                }
+              />
+              {/* Legacy alias: existing links/messages use /auth?returnTo=… */}
+              <Route
+                path="/auth"
+                element={<AuthPage redirectAfterAuth="/app/dashboard" />}
+              />
+
+              {/* Onboarding stays outside the shell: AppLayout redirects here
+                  when there is no workspace, and nesting it would loop. */}
+              <Route
+                path="/app/onboarding"
                 element={
                   <RequireAuth>
                     <Onboarding />
                   </RequireAuth>
                 }
               />
-              {/* Protected app pages share the shell. /onboarding stays
-                  outside: AppLayout redirects here when there is no workspace,
-                  and nesting it would loop. */}
+
+              {/* ── Protected CRM (all under /app) ── */}
               <Route element={<ProtectedLayout />}>
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/clientes" element={<Clients />} />
-                <Route path="/clientes/:id" element={<ClientDetail />} />
-                <Route path="/sessoes" element={<Sessions />} />
-                <Route path="/servicos" element={<Services />} />
-                <Route path="/configuracoes" element={<Settings />} />
-                <Route path="/admin" element={<Admin />} />
+                <Route path="/app" element={<Navigate to="/app/dashboard" replace />} />
+                <Route path="/app/dashboard" element={<Dashboard />} />
+                <Route path="/app/clientes" element={<Clients />} />
+                <Route path="/app/clientes/:id" element={<ClientDetail />} />
+                <Route path="/app/retornos" element={<Returns />} />
+                <Route
+                  path="/app/agenda"
+                  element={<Sessions initialTab="agendadas" />}
+                />
+                <Route
+                  path="/app/atendimentos"
+                  element={<Sessions initialTab="historico" />}
+                />
+                <Route path="/app/servicos" element={<Services />} />
+                <Route path="/app/configuracoes" element={<Settings />} />
+                <Route path="/app/admin" element={<Admin />} />
               </Route>
+
               {/* Billing is outside the shell on purpose: after the trial ends
                   it must stay reachable while the rest is blocked. */}
               <Route
-                path="/assinatura"
+                path="/app/assinatura"
                 element={
                   <RequireAuth>
                     <Subscription />
                   </RequireAuth>
                 }
               />
+
+              {/* ── Legacy CRM paths → /app/* (bookmarks, old links) ── */}
+              <Route
+                path="/dashboard"
+                element={<Navigate to="/app/dashboard" replace />}
+              />
+              <Route
+                path="/clientes"
+                element={<Navigate to="/app/clientes" replace />}
+              />
+              <Route path="/clientes/:id" element={<LegacyClientRedirect />} />
+              <Route path="/sessoes" element={<Navigate to="/app/agenda" replace />} />
+              <Route
+                path="/servicos"
+                element={<Navigate to="/app/servicos" replace />}
+              />
+              <Route
+                path="/configuracoes"
+                element={<Navigate to="/app/configuracoes" replace />}
+              />
+              <Route path="/admin" element={<Navigate to="/app/admin" replace />} />
+              <Route
+                path="/assinatura"
+                element={<Navigate to="/app/assinatura" replace />}
+              />
+              <Route
+                path="/onboarding"
+                element={<Navigate to="/app/onboarding" replace />}
+              />
+
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

@@ -103,7 +103,7 @@ export default function ClientDetail() {
       <div className="flex flex-col items-center gap-4 py-20 text-center">
         <p className="text-sm font-medium">Cliente não encontrado.</p>
         <Button asChild variant="outline">
-          <Link to="/clientes">
+          <Link to="/app/clientes">
             <ArrowLeft className="size-4" aria-hidden />
             Voltar para Clientes
           </Link>
@@ -118,7 +118,7 @@ export default function ClientDetail() {
   return (
     <div className="flex flex-col gap-6">
       <Button asChild variant="ghost" size="sm" className="-ml-2 w-fit gap-2 text-muted-foreground">
-        <Link to="/clientes">
+        <Link to="/app/clientes">
           <ArrowLeft className="size-4" aria-hidden />
           Clientes
         </Link>
@@ -695,7 +695,7 @@ function DeleteClientButton({ clientId }: { clientId: Id<"clients"> }) {
         try {
           await removeClient({ id: clientId });
           toast.success("Cliente excluído.");
-          navigate("/clientes");
+          navigate("/app/clientes");
         } catch (error) {
           toast.error(
             error instanceof Error

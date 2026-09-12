@@ -1,28 +1,26 @@
-import { cn } from "@/lib/utils";
+interface LogoProps {
+  className?: string;
+  bgClassName?: string;
+  fgClassName?: string;
+}
 
 /**
- * Retorno Massagem brand mark used across the product — the same lotus
- * logo as the landing page: light-mint petals over two supporting leaves
- * on a deep-green tile.
+ * Retorno Massagem brand mark — a lotus over two supporting leaves.
+ * Colors come from Tailwind classes so it adapts to light/dark contexts.
  */
-export function BrandMark({
-  className,
-  iconClassName,
-}: {
-  className?: string;
-  iconClassName?: string;
-}) {
+export function Logo({
+  className = "h-9 w-9",
+  bgClassName = "bg-primary",
+  fgClassName = "text-primary-fixed",
+}: LogoProps) {
   return (
-    <div
-      className={cn(
-        "flex shrink-0 items-center justify-center rounded-xl bg-[#003629] text-[#baeed9]",
-        className,
-      )}
+    <span
+      className={`inline-flex shrink-0 items-center justify-center rounded-full ${bgClassName} ${className}`}
       aria-hidden="true"
     >
       <svg
         viewBox="0 0 24 24"
-        className={cn("size-[60%]", iconClassName)}
+        className={`h-[60%] w-[60%] ${fgClassName}`}
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
@@ -50,6 +48,6 @@ export function BrandMark({
           fill="currentColor"
         />
       </svg>
-    </div>
+    </span>
   );
 }

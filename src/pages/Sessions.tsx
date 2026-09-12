@@ -35,10 +35,16 @@ import {
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
-export default function Sessions() {
+interface SessionsProps {
+  /** Initial tab: /app/agenda opens "agendadas", /app/atendimentos opens "historico". */
+  initialTab?: "agendadas" | "historico";
+}
+
+export default function Sessions({ initialTab = "agendadas" }: SessionsProps) {
   const sessions = useQuery(api.sessions.list);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [tab, setTab] = useState<"agendadas" | "historico">("agendadas");
+  // /app/agenda opens on "agendadas", /app/atendimentos on "historico".
+  const [tab, setTab] = useState<"agendadas" | "historico">(initialTab);
 
   const now = Date.now();
 
